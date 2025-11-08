@@ -89,20 +89,49 @@ async def chat_stream(request: ChatRequest):
                 run_agent = get_agent()
                 response = run_agent(request.message, request.history)
                 
-                print('response:', response)
+                if not response:
+                    yield f"data: {json.dumps({'error': 'Empty response from agent'})}\n\n"
+                    return
                 
-                # Simulate streaming by sending chunks
+                print(f'📤 Streaming response ({len(response)} chars)')
+                
+                # Stream by words for better readability
                 words = response.split()
+                newline_token = '\n'
                 for i, word in enumerate(words):
-                    chunk = word + (" " if i < len(words) - 1 else "")
-                    yield f"data: {json.dumps({'token': chunk})}\n\n"
-                    await asyncio.sleep(0.05)
+                    # Preserve line breaks
+                    if newline_token in word:
+                        parts = word.split(newline_token)
+                        for j, part in enumerate(parts):
+                            if part:
+                                yield f"data: {json.dumps({'token': part})}\n\n"
+                            if j < len(parts) - 1:
+                                yield f"data: {json.dumps({'token': newline_token})}\n\n"
+                    else:
+                        chunk = word + (" " if i < len(words) - 1 else "")
+                        yield f"data: {json.dumps({'token': chunk})}\n\n"
+                    
+                    await asyncio.sleep(0.03)  # Slightly faster streaming
                 
                 yield "data: [DONE]\n\n"
             
             except Exception as e:
-                print(f"Error in /chat/stream: {str(e)}")
-                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                error_msg = str(e)
+                print(f"❌ Error in /chat/stream: {error_msg}")
+                import traceback
+                traceback.print_exc()
+                
+                # Provide user-friendly error messages
+                if "Model is loading" in error_msg or "503" in error_msg:
+                    user_msg = "The AI model is currently loading. Please wait a moment and try again."
+                elif "timeout" in error_msg.lower():
+                    user_msg = "Request timed out. Please try again."
+                elif "401" in error_msg or "403" in error_msg:
+                    user_msg = "Authentication error. Please check your API key."
+                else:
+                    user_msg = f"An error occurred: {error_msg}"
+                
+                yield f"data: {json.dumps({'error': user_msg})}\n\n"
         
         return StreamingResponse(
             generate(),
@@ -114,7 +143,7 @@ async def chat_stream(request: ChatRequest):
         )
     
     except Exception as e:
-        print(f"Error in /chat/stream endpoint: {str(e)}")
+        print(f"❌ Error in /chat/stream endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

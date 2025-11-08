@@ -80,76 +80,78 @@ def execute_tools(tool_calls: list) -> str:
     return "\n".join(results) if results else "No tools executed."
 
 class HuggingFaceLLM:
-    """Custom LLM wrapper supporting both Router API and Inference API."""
+    """Custom LLM wrapper for HuggingFace Router API with chat completions."""
     
     def __init__(self, api_key: str, model: str = None):
         self.api_key = api_key
-        self.model = model or os.getenv("HUGGINGFACE_MODEL", "DeepHat/DeepHat-V1-7B")
+        model_name = model or os.getenv("HUGGINGFACE_MODEL", "DeepHat/DeepHat-V1-7B")
         
-        # Determine which API to use based on model
-        if "DeepHat" in self.model:
-            # Use Inference API for DeepHat model
-            self.use_inference_api = True
-            self.endpoint = f"https://api-inference.huggingface.co/models/{self.model}"
+        # Add provider suffix for DeepHat model if not present
+        if "DeepHat" in model_name and ":featherless-ai" not in model_name:
+            self.model = f"{model_name}:featherless-ai"
         else:
-            # Use Router API for other models
-            self.use_inference_api = False
-            self.endpoint = "https://router.huggingface.co/v1/chat/completions"
+            self.model = model_name
+        
+        # Use chat completions endpoint for all models
+        self.endpoint = "https://router.huggingface.co/v1/chat/completions"
         
         print(f"🤖 Using model: {self.model}")
-        print(f"📡 API: {'Inference' if self.use_inference_api else 'Router'}")
+        print(f"📡 Endpoint: {self.endpoint}")
     
-    def invoke(self, prompt: str) -> str:
-        """Call the HuggingFace API."""
+    def invoke(self, prompt: str, max_retries: int = 3) -> str:
+        """Call the HuggingFace API using chat completions format with retry logic."""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
         
-        if self.use_inference_api:
-            # Inference API format (for DeepHat)
-            payload = {
-                "inputs": prompt,
-                "parameters": {
-                    "max_new_tokens": 512,
-                    "temperature": 0.7,
-                    "top_p": 0.95,
-                    "return_full_text": False
-                }
-            }
-        else:
-            # Router API format (for Llama, Mistral, etc.)
-            payload = {
-                "model": self.model,
-                "messages": [
-                    {"role": "system", "content": "You are DeepHat, created by Kindo.ai. You are a helpful assistant that is an expert in Cybersecurity and DevOps."},
-                    {"role": "user", "content": prompt}
-                ],
-                "max_tokens": 512,
-                "temperature": 0.7,
-                "stream": False
-            }
+        # Use chat completions format for all models
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": "You are DeepHat, created by Kindo.ai. You are a helpful assistant that is an expert in Cybersecurity and DevOps."},
+                {"role": "user", "content": prompt}
+            ],
+            "max_tokens": 512,
+            "temperature": 0.7,
+            "stream": False
+        }
         
-        try:
-            response = requests.post(self.endpoint, json=payload, headers=headers, timeout=60)
-            response.raise_for_status()
-            
-            result = response.json()
-            
-            if self.use_inference_api:
-                # Inference API returns array of results
-                if isinstance(result, list) and len(result) > 0:
-                    return result[0].get("generated_text", "")
-                return str(result)
-            else:
-                # Router API returns OpenAI-compatible format
+        import time
+        
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(self.endpoint, json=payload, headers=headers, timeout=60)
+                response.raise_for_status()
+                
+                result = response.json()
+                
+                # OpenAI-compatible format
                 return result["choices"][0]["message"]["content"]
-        
-        except requests.exceptions.RequestException as e:
-            print(f"❌ Error calling HuggingFace API: {str(e)}")
-            if hasattr(e, 'response') and e.response is not None:
-                print(f"Response: {e.response.text}")
-            raise
+            
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 503:
+                    # Model is loading, wait and retry
+                    wait_time = (attempt + 1) * 5  # 5, 10, 15 seconds
+                    print(f"⏳ Model loading... Retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})")
+                    
+                    if attempt < max_retries - 1:
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        print(f"❌ Model still unavailable after {max_retries} attempts")
+                        raise Exception("Model is loading. Please try again in a moment.")
+                else:
+                    print(f"❌ HTTP Error {e.response.status_code}: {str(e)}")
+                    if hasattr(e, 'response') and e.response is not None:
+                        print(f"Response: {e.response.text}")
+                    raise
+            
+            except requests.exceptions.RequestException as e:
+                print(f"❌ Error calling HuggingFace API: {str(e)}")
+                if hasattr(e, 'response') and e.response is not None:
+                    print(f"Response: {e.response.text}")
+                raise
 
 # Initialize LLM
 def create_agent():
@@ -212,6 +214,38 @@ def create_agent():
 # Create agent instance
 agent_executor = create_agent()
 
+def clean_response(content: str) -> str:
+    """Clean up the response by removing tool call syntax and extra whitespace."""
+    if not content:
+        return ""
+    
+    # Remove TOOL_CALL lines
+    lines = content.split('\n')
+    cleaned_lines = []
+    skip_next = False
+    
+    for line in lines:
+        # Skip TOOL_CALL lines
+        if re.match(r'^\s*TOOL_CALL:', line, re.IGNORECASE):
+            continue
+        # Skip TOOL_RESULTS section header
+        if re.match(r'^\s*TOOL_RESULTS:', line, re.IGNORECASE):
+            skip_next = True
+            continue
+        # Skip the instruction line after TOOL_RESULTS
+        if skip_next and "provide your final answer" in line.lower():
+            skip_next = False
+            continue
+        
+        cleaned_lines.append(line)
+    
+    # Join and clean up extra whitespace
+    result = '\n'.join(cleaned_lines)
+    result = re.sub(r'\n{3,}', '\n\n', result)  # Max 2 consecutive newlines
+    result = result.strip()
+    
+    return result
+
 def run_agent(message: str, history: list = None):
     """Run the agent with a message and optional history."""
     messages = []
@@ -227,17 +261,21 @@ def run_agent(message: str, history: list = None):
     # Add current message
     messages.append(HumanMessage(content=message))
     
-    # Run agent
-    result = agent_executor.invoke({"messages": messages, "tool_calls": []})
+    try:
+        # Run agent
+        result = agent_executor.invoke({"messages": messages, "tool_calls": []})
+        
+        # Extract final response
+        final_message = result["messages"][-1]
+        content = final_message.content if hasattr(final_message, 'content') else str(final_message)
+        
+        # Clean up the response
+        cleaned_content = clean_response(content)
+        
+        print('✅ Agent response:', cleaned_content[:200] + '...' if len(cleaned_content) > 200 else cleaned_content)
+        
+        return cleaned_content
     
-    # Extract final response
-    final_message = result["messages"][-1]
-    
-    # Clean up tool call syntax from final response
-    content = final_message.content
-    content = re.sub(r'TOOL_CALL:.*?\n', '', content, flags=re.IGNORECASE)
-    content = re.sub(r'TOOL_RESULTS:.*?\n\n', '', content, flags=re.DOTALL)
-    
-    print('✅ Agent response:', content.strip())
-
-    return content.strip()
+    except Exception as e:
+        print(f"❌ Error in run_agent: {str(e)}")
+        raise
