@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text()
       console.error("[Frontend] Python backend error:", response.status, errorText)
-      
+
       // Provide user-friendly error messages
       let errorMessage = "Backend error occurred"
       try {
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       } catch {
         errorMessage = errorText || errorMessage
       }
-      
+
       return new Response(JSON.stringify({ error: errorMessage }), {
         status: response.status,
         headers: { "Content-Type": "application/json" },
@@ -55,20 +55,20 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error("[Frontend] Error in chat route:", error?.message)
-    
+
     // Check if backend is unreachable
     if (error?.cause?.code === "ECONNREFUSED" || error?.message?.includes("fetch failed")) {
       return new Response(
-        JSON.stringify({ 
-          error: "Cannot connect to Python backend. Please ensure the backend is running on port 8000." 
-        }), 
+        JSON.stringify({
+          error: "Cannot connect to Python backend. Please ensure the backend is running on port 8000."
+        }),
         {
           status: 503,
           headers: { "Content-Type": "application/json" },
         }
       )
     }
-    
+
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

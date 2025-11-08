@@ -48,34 +48,48 @@ export default function ChatPage() {
 
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
+      let assistantMessage = ""
 
+      // Add empty assistant message
       setMessages((prev) => [...prev, { role: "assistant", content: "" }])
 
-      while (reader) {
+      if (!reader) {
+        throw new Error("No response body")
+      }
+
+      while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        const chunk = decoder.decode(value)
-        const lines = chunk.split("\n")
+        const chunk = decoder.decode(value, { stream: true })
+        const lines = chunk.split("\n").filter(line => line.trim() !== "")
 
         for (const line of lines) {
           if (line.startsWith("data: ")) {
-            const data = line.slice(6)
+            const data = line.slice(6).trim()
             if (data === "[DONE]") continue
 
             try {
               const parsed = JSON.parse(data)
               if (parsed.token) {
+                assistantMessage += parsed.token
+                // Update the last message with accumulated content
                 setMessages((prev) => {
                   const updated = [...prev]
-                  updated[updated.length - 1].content += parsed.token
+                  updated[updated.length - 1] = {
+                    role: "assistant",
+                    content: assistantMessage
+                  }
                   return updated
                 })
               } else if (parsed.error) {
                 console.error("[v0] Stream error:", parsed.error)
+                throw new Error(parsed.error)
               }
             } catch (e) {
-              // Ignore JSON parse errors for partial chunks
+              if (e instanceof Error && e.message !== "Unexpected end of JSON input") {
+                console.error("[v0] Parse error:", e)
+              }
             }
           }
         }
