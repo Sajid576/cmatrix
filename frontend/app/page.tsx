@@ -3,6 +3,26 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
+
+function TypewriterText({ text, speed = 100 }: { text: string; speed?: number }) {
+  const [displayText, setDisplayText] = useState("")
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isComplete, setIsComplete] = useState(false)
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timer = setTimeout(() => {
+        setDisplayText((prev) => prev + text[currentIndex])
+        setCurrentIndex((prev) => prev + 1)
+      }, speed)
+      return () => clearTimeout(timer)
+    } else {
+      setIsComplete(true)
+    }
+  }, [currentIndex, text, speed])
+
+  return <span>{displayText}{!isComplete && <span className="animate-pulse">|</span>}</span>
+}
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Send, Loader2, Sparkles } from "lucide-react"
@@ -126,7 +146,7 @@ export default function ChatPage() {
               <Sparkles className="w-5 h-5 text-secondary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold terminal-text">CMATRIX</h1>
+              <h1 className="text-lg font-semibold terminal-text">CMatrix</h1>
               <div className="text-xs text-muted-foreground">Neural Interface Active</div>
             </div>
           </div>
@@ -146,7 +166,9 @@ export default function ChatPage() {
                 <Sparkles className="w-12 h-12 text-secondary-foreground" />
               </div>
               <div className="text-center space-y-4">
-                <h2 className="text-4xl font-bold text-balance terminal-text glow-primary">CMATRIX INTERFACE</h2>
+                <h2 className="text-4xl font-bold text-balance terminal-text glow-primary">
+                  <TypewriterText text="CMatrix" speed={150} />
+                </h2>
                 <p className="text-muted-foreground text-pretty max-w-md terminal-text">
                   Neural network activated. Agent capabilities: security scanning, system monitoring, log analysis, configuration deployment.
                 </p>
