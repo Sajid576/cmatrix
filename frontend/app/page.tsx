@@ -25,7 +25,7 @@ function TypewriterText({ text, speed = 100 }: { text: string; speed?: number })
 }
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Send, Loader2, Sparkles } from "lucide-react"
+import { Send, Loader2, Shield, Zap } from "lucide-react"
 import { ChatMessage } from "@/components/chat-message"
 
 export default function ChatPage() {
@@ -143,7 +143,7 @@ export default function ChatPage() {
         <div className="container flex items-center justify-between h-14 px-4 mx-auto">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary cyber-border">
-              <Sparkles className="w-5 h-5 text-secondary-foreground" />
+              <Shield className="w-5 h-5 text-secondary-foreground" />
             </div>
             <div>
               <h1 className="text-lg font-semibold terminal-text">CMatrix</h1>
@@ -162,15 +162,22 @@ export default function ChatPage() {
         <div className="container max-w-4xl px-4 py-8 mx-auto">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-8 py-12">
-              <div className="flex items-center justify-center w-24 h-24 rounded-2xl bg-secondary cyber-border">
-                <Sparkles className="w-12 h-12 text-secondary-foreground" />
+              <div className="flex items-center justify-center gap-6">
+                <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-secondary cyber-border">
+                  <Zap className="w-10 h-10 text-secondary-foreground" />
+                </div>
+                <div className="text-left">
+                  <h2 className="text-4xl font-bold text-balance terminal-text glow-primary">
+                    <TypewriterText text="CMatrix" speed={150} />
+                  </h2>
+                  <div className="text-sm text-muted-foreground terminal-text mt-2">
+                    Neural Interface
+                  </div>
+                </div>
               </div>
               <div className="text-center space-y-4">
-                <h2 className="text-4xl font-bold text-balance terminal-text glow-primary">
-                  <TypewriterText text="CMatrix" speed={150} />
-                </h2>
                 <p className="text-muted-foreground text-pretty max-w-md terminal-text">
-                  Neural network activated. Agent capabilities: security scanning, system monitoring, log analysis, configuration deployment.
+                  Agent capabilities: security scanning, system monitoring, log analysis, configuration deployment.
                 </p>
                 <div className="text-xs text-muted-foreground terminal-text">
                   [SYSTEM STATUS: OPERATIONAL] [AGENT: DEEPHAT-V1-7B]
@@ -216,7 +223,7 @@ export default function ChatPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Enter command or query..."
-              className="pr-12 resize-none min-h-[60px] max-h-[200px] cyber-border terminal-text bg-gray-900 text-white placeholder:text-gray-400"
+              className="pr-12 resize-none min-h-[60px] max-h-[200px] cyber-border bg-black text-white placeholder:text-gray-400"
               disabled={isLoading}
             />
             <Button

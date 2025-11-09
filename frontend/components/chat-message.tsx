@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils"
-import { User, Sparkles, Loader2 } from "lucide-react"
+import { User, Shield, Loader2 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 
 interface ChatMessageProps {
@@ -16,7 +16,7 @@ export function ChatMessage({ role, content, isLoading }: ChatMessageProps) {
       {!isUser && (
         <div className="flex items-start flex-shrink-0">
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary cyber-border">
-            <Sparkles className="w-5 h-5 text-secondary-foreground" />
+            <Shield className="w-5 h-5 text-secondary-foreground" />
           </div>
         </div>
       )}
@@ -32,7 +32,7 @@ export function ChatMessage({ role, content, isLoading }: ChatMessageProps) {
           className={cn(
             "rounded-lg px-4 py-3 text-sm leading-relaxed cyber-border",
             isUser
-              ? "bg-gray-900 text-white"
+              ? "bg-black text-white"
               : "bg-muted text-foreground terminal-text",
             !isUser && "scan-line"
           )}
@@ -45,7 +45,7 @@ export function ChatMessage({ role, content, isLoading }: ChatMessageProps) {
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none">
               {isUser ? (
-                <span className="terminal-text">{content}</span>
+                <span>{content}</span>
               ) : (
                 <ReactMarkdown>{content || "\u00A0"}</ReactMarkdown>
               )}
