@@ -34,7 +34,7 @@ export function ChatMessage({ role, content, isLoading }: ChatMessageProps) {
             isUser
               ? "bg-black text-white"
               : "bg-muted text-foreground terminal-text",
-            !isUser && "scan-line"
+            !isUser && isLoading && "scan-line"
           )}
         >
           {isLoading ? (
