@@ -117,16 +117,23 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
+      <div className="matrix-rain"></div>
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-border bg-card cyber-border scan-line">
         <div className="container flex items-center justify-between h-14 px-4 mx-auto">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-chart-1">
-              <Sparkles className="w-4 h-4 text-primary-foreground" />
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary cyber-border">
+              <Sparkles className="w-5 h-5 text-secondary-foreground" />
             </div>
-            <h1 className="text-lg font-semibold">DeepHat AI Chat</h1>
+            <div>
+              <h1 className="text-lg font-semibold terminal-text">CMATRIX</h1>
+              <div className="text-xs text-muted-foreground">Neural Interface Active</div>
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground">Powered by DeepHat-V1-7B</div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-chart-1 rounded-full animate-pulse"></div>
+            <div className="text-xs text-muted-foreground terminal-text">AGENT ONLINE</div>
+          </div>
         </div>
       </header>
 
@@ -135,29 +142,32 @@ export default function ChatPage() {
         <div className="container max-w-4xl px-4 py-8 mx-auto">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-8 py-12">
-              <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-chart-1">
-                <Sparkles className="w-10 h-10 text-primary-foreground" />
+              <div className="flex items-center justify-center w-24 h-24 rounded-2xl bg-secondary cyber-border">
+                <Sparkles className="w-12 h-12 text-secondary-foreground" />
               </div>
-              <div className="text-center space-y-2">
-                <h2 className="text-3xl font-bold text-balance">Welcome to DeepHat AI</h2>
-                <p className="text-muted-foreground text-pretty max-w-md">
-                  Start a conversation with DeepHat-V1-7B. Ask questions, get insights, or just chat!
+              <div className="text-center space-y-4">
+                <h2 className="text-4xl font-bold text-balance terminal-text glow-primary">CMATRIX INTERFACE</h2>
+                <p className="text-muted-foreground text-pretty max-w-md terminal-text">
+                  Neural network activated. Agent capabilities: security scanning, system monitoring, log analysis, configuration deployment.
                 </p>
+                <div className="text-xs text-muted-foreground terminal-text">
+                  [SYSTEM STATUS: OPERATIONAL] [AGENT: DEEPHAT-V1-7B]
+                </div>
               </div>
               <div className="grid gap-3 mt-4 sm:grid-cols-2">
                 <button
-                  onClick={() => setInput("What are your capabilities?")}
-                  className="px-4 py-3 text-sm text-left transition-colors border rounded-lg border-border hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => setInput("Scan my web application for vulnerabilities")}
+                  className="px-4 py-3 text-sm text-left transition-colors border rounded-lg border-border hover:bg-accent hover:text-accent-foreground cyber-border"
                 >
-                  <div className="font-medium">What are your capabilities?</div>
-                  <div className="text-xs text-muted-foreground">Learn what I can do</div>
+                  <div className="font-medium terminal-text">Security Scan</div>
+                  <div className="text-xs text-muted-foreground">Analyze system vulnerabilities</div>
                 </button>
                 <button
-                  onClick={() => setInput("Tell me an interesting fact")}
-                  className="px-4 py-3 text-sm text-left transition-colors border rounded-lg border-border hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => setInput("Check the status of critical services")}
+                  className="px-4 py-3 text-sm text-left transition-colors border rounded-lg border-border hover:bg-accent hover:text-accent-foreground cyber-border"
                 >
-                  <div className="font-medium">Tell me an interesting fact</div>
-                  <div className="text-xs text-muted-foreground">Discover something new</div>
+                  <div className="font-medium terminal-text">System Status</div>
+                  <div className="text-xs text-muted-foreground">Monitor infrastructure health</div>
                 </button>
               </div>
             </div>
@@ -176,28 +186,28 @@ export default function ChatPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-border bg-card">
+      <div className="border-t border-border bg-card cyber-border">
         <div className="container max-w-4xl px-4 py-4 mx-auto">
           <form onSubmit={handleSubmit} className="relative">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Message DeepHat AI..."
-              className="pr-12 resize-none min-h-[60px] max-h-[200px]"
+              placeholder="Enter command or query..."
+              className="pr-12 resize-none min-h-[60px] max-h-[200px] cyber-border terminal-text bg-gray-900 text-white placeholder:text-gray-400"
               disabled={isLoading}
             />
             <Button
               type="submit"
               size="icon"
               disabled={!input.trim() || isLoading}
-              className="absolute bottom-2 right-2 rounded-lg"
+              className="absolute bottom-2 right-2 rounded-lg bg-black text-white hover:bg-gray-800"
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </Button>
           </form>
-          <p className="mt-2 text-xs text-center text-muted-foreground">
-            AI responses may not always be accurate. Verify important information.
+          <p className="mt-2 text-xs text-center text-muted-foreground terminal-text">
+            [SECURITY NOTICE] Neural responses may contain classified information. Handle with care.
           </p>
         </div>
       </div>

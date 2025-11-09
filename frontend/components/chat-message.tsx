@@ -15,36 +15,55 @@ export function ChatMessage({ role, content, isLoading }: ChatMessageProps) {
     <div className={cn("flex gap-4 group", isUser ? "justify-end" : "justify-start")}>
       {!isUser && (
         <div className="flex items-start flex-shrink-0">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-chart-1">
-            <Sparkles className="w-4 h-4 text-primary-foreground" />
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary cyber-border">
+            <Sparkles className="w-5 h-5 text-secondary-foreground" />
           </div>
         </div>
       )}
 
       <div className={cn("flex flex-col gap-2 max-w-[80%] sm:max-w-[70%]", isUser && "items-end")}>
+        {!isUser && (
+          <div className="text-xs text-muted-foreground terminal-text flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+            DEEPHAT AGENT
+          </div>
+        )}
         <div
           className={cn(
-            "rounded-2xl px-4 py-3 text-sm leading-relaxed",
-            isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+            "rounded-lg px-4 py-3 text-sm leading-relaxed cyber-border",
+            isUser
+              ? "bg-gray-900 text-white"
+              : "bg-muted text-foreground terminal-text",
+            !isUser && "scan-line"
           )}
         >
           {isLoading ? (
-            <div className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-muted-foreground">Thinking...</span>
+            <div className="flex items-center gap-2 terminal-text">
+              <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+              <span className="text-muted-foreground">[PROCESSING QUERY...]</span>
             </div>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none">
-              {isUser ? content : <ReactMarkdown>{content || "\u00A0"}</ReactMarkdown>}
+              {isUser ? (
+                <span className="terminal-text">{content}</span>
+              ) : (
+                <ReactMarkdown>{content || "\u00A0"}</ReactMarkdown>
+              )}
             </div>
           )}
         </div>
+        {isUser && (
+          <div className="text-xs text-muted-foreground terminal-text flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+            HUMAN OPERATOR
+          </div>
+        )}
       </div>
 
       {isUser && (
         <div className="flex items-start flex-shrink-0">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary">
-            <User className="w-4 h-4 text-secondary-foreground" />
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary cyber-border">
+            <User className="w-5 h-5 text-secondary-foreground" />
           </div>
         </div>
       )}
